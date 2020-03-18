@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Breadcumb, BreadcumbItem } from "./../components/Breadcumb";
+import { Breadcumb, BreadcumbItem } from "../components/Breadcumb";
 import { Route } from "react-router-dom";
 import service from "./../services/service";
 import Spinner from "./../components/Spinner";
@@ -18,8 +18,10 @@ import {
   RaisedButton,
   TextField
 } from "material-ui";
-import { Debounce } from "./../utils/debounce";
+import { Debounce } from "../utils/debounce";
 import { WorkspaceConfig } from "../../global-types";
+import path from "path";
+import { instance as api } from "../api";
 
 
 const Fragment = React.Fragment;
@@ -68,9 +70,7 @@ class DeleteItemKeyDialog extends React.Component<DeleteItemKeyDialogProps, Dele
           <FlatButton disabled={busy} primary={true} label="Delete" onClick={this.handleConfirm.bind(this)} />
         ]}
       >
-        {this.state.valid ? (
-          undefined
-        ) : (
+        {!this.state.valid && (
           <p>
             Do you really want to delete the item <b>"{itemLabel}"</b>?
           </p>
@@ -180,13 +180,14 @@ type CollectionState = {
 };
 
 class CollectionListItems extends React.PureComponent<{
+  collectionBase: string;
   filteredItems: Array<any>;
   onItemClick: (item: any) => void;
   onRenameItemClick: (item: any) => void;
   onDeleteItemClick: (item: any) => void;
 }> {
   render() {
-    let { filteredItems, onItemClick, onRenameItemClick, onDeleteItemClick } = this.props;
+    let { filteredItems, onItemClick, onRenameItemClick, onDeleteItemClick, collectionBase } = this.props;
     return (
       <React.Fragment>
         {filteredItems.map((item, index) => {
@@ -196,8 +197,10 @@ class CollectionListItems extends React.PureComponent<{
             </IconButton>
           );
 
+          const filePath = path.join(collectionBase, item.key);
           let rightIconMenu = (
             <IconMenu iconButtonElement={iconButtonElement}>
+              <MenuItem onClick={() => api.openFileExternally(filePath)}>Open externally</MenuItem>
               <MenuItem onClick={() => onRenameItemClick(item)}>Rename</MenuItem>
               <MenuItem onClick={() => onDeleteItemClick(item)}>Delete</MenuItem>
             </IconMenu>
@@ -262,8 +265,8 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
   }
 
   refreshItems() {
-    var stateUpdate: any = {};
-    var { siteKey, workspaceKey, collectionKey } = this.props;
+    let stateUpdate: any = {};
+    const { siteKey, workspaceKey, collectionKey } = this.props;
     if (siteKey && workspaceKey && collectionKey) {
       Promise.all([
         service.api.listCollectionItems(siteKey, workspaceKey, collectionKey).then(items => {
@@ -277,7 +280,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
         .then(() => {
           this.setState(stateUpdate);
         })
-        .catch(e => {});
+        .catch(_ => {});
     }
   }
 
@@ -305,7 +308,6 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
   renameCollectionItem(itemKey: string, itemOldKey: string) {
     let { siteKey, workspaceKey, collectionKey } = this.props;
     if (this.state.view == null) return;
-    let view = this.state.view;
     service.api.renameCollectionItem(siteKey, workspaceKey, collectionKey, itemOldKey, itemKey).then(
       result => {
         if (result.renamed) {
@@ -336,7 +338,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
     service.api
       .createCollectionItemKey(siteKey, workspaceKey, collectionKey, itemKey)
       .then(
-        ({ unavailableReason, key }) => {
+        ({ unavailableReason }) => {
           if (unavailableReason) {
             //TODO: display some warning
             this.setState({ modalBusy: false });
@@ -345,7 +347,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
             this.refreshItems();
           }
         },
-        e => {
+        _ => {
           this.setState({ modalBusy: false });
         }
       )
@@ -406,7 +408,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
   };
 
   render() {
-    let { siteKey, workspaceKey, collectionKey } = this.props;
+    const { collectionKey } = this.props;
     let { filteredItems, trunked } = this.state;
     let dialog: any = undefined;
 
@@ -454,6 +456,8 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
     const collection = selectedWorkspaceDetails.collections.find(x => x.key == collectionKey);
     if (collection == null) return null;
 
+    const collectionBase = path.join(selectedWorkspaceDetails.path, collection.folder);
+
     return (
       <Route
         render={({ history }) => {
@@ -493,6 +497,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
               <Paper>
                 <List>
                   <CollectionListItems
+                    collectionBase={collectionBase}
                     filteredItems={filteredItems}
                     onItemClick={this.handleItemClick}
                     onRenameItemClick={this.handleRenameItemClick}

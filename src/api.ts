@@ -101,6 +101,10 @@ export class API {
     mainProcessBridge.requestVoid("openFileExplorer", { path });
   }
 
+  openFileExternally = (path: string) => {
+    window.require("electron").remote.shell.openExternal(path);
+  };
+
   async openFileDialogForCollectionItem(
     siteKey: string,
     workspaceKey: string,
