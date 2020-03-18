@@ -4,24 +4,27 @@ import { Route } from "react-router-dom";
 import service from "./../services/service";
 import Spinner from "./../components/Spinner";
 import MoreVertIcon from "material-ui/svg-icons/navigation/more-vert";
+import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
+import IconButton from "@material-ui/core/IconButton";
+import OpenInNewIcon from "@material-ui/icons/OpenInNew";
+
 import {
-  Chip,
   Divider,
-  Dialog,
-  FlatButton,
-  IconButton,
-  IconMenu,
-  List,
-  ListItem,
+  Dialog as NewDialog,
+  Button,
   MenuItem,
   Paper,
-  RaisedButton,
-  TextField
-} from "material-ui";
+  DialogActions,
+  DialogContent,
+  DialogContentText
+} from "@material-ui/core";
 import { Debounce } from "../utils/debounce";
 import { WorkspaceConfig } from "../../global-types";
 import path from "path";
 import { instance as api } from "../api";
+import { List, ListItem, ListItemText } from "@material-ui/core";
+import { useState } from "react";
+import { Dialog, FlatButton, IconMenu, TextField, Chip } from "material-ui";
 
 
 const Fragment = React.Fragment;
@@ -29,58 +32,40 @@ const Fragment = React.Fragment;
 const MAX_RECORDS = 200;
 
 type DeleteItemKeyDialogProps = {
-  busy: boolean;
   itemLabel: string;
+  handleConfirm: () => void;
   handleClose: () => void;
-  handleConfirm: (key: string) => void;
 };
 
-type DeleteItemKeyDialogState = {
-  value: string;
-  valid?: boolean;
+const DeleteItemKeyDialog: React.FC<DeleteItemKeyDialogProps> = props => {
+  const { itemLabel } = props;
+
+  const handleClose = () => {
+    props.handleClose();
+  };
+
+  const handleConfirm = async () => {
+    await props.handleConfirm();
+  };
+
+  return (
+    <NewDialog title={"Delete Item"} open={true} onClose={handleClose}>
+      <DialogContent>
+        <DialogContentText id="alert-dialog-description">
+          Do you really want to delete the item <b>"{itemLabel}"</b>?
+        </DialogContentText>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={handleClose} color="primary">
+          Cancel
+        </Button>
+        <Button onClick={handleConfirm} color="primary" autoFocus>
+          Delete
+        </Button>
+      </DialogActions>
+    </NewDialog>
+  );
 };
-
-class DeleteItemKeyDialog extends React.Component<DeleteItemKeyDialogProps, DeleteItemKeyDialogState> {
-  constructor(props: DeleteItemKeyDialogProps) {
-    super(props);
-    this.state = {
-      value: ""
-    };
-  }
-
-  handleClose() {
-    if (this.props.handleClose && !this.props.busy) this.props.handleClose();
-  }
-
-  handleConfirm() {
-    if (this.props.handleConfirm) this.props.handleConfirm(this.state.value);
-  }
-
-  render() {
-    let { busy, itemLabel } = this.props;
-
-    return (
-      <Dialog
-        title={"Delete Item"}
-        modal={true}
-        open={true}
-        onRequestClose={this.handleClose}
-        actions={[
-          <FlatButton disabled={busy} primary={true} label="Cancel" onClick={this.handleClose.bind(this)} />,
-          <FlatButton disabled={busy} primary={true} label="Delete" onClick={this.handleConfirm.bind(this)} />
-        ]}
-      >
-        {!this.state.valid && (
-          <p>
-            Do you really want to delete the item <b>"{itemLabel}"</b>?
-          </p>
-        )}
-
-        {busy ? <Spinner /> : undefined}
-      </Dialog>
-    );
-  }
-}
 
 type EditItemKeyDialogProps = {
   busy: boolean;
@@ -192,7 +177,7 @@ class CollectionListItems extends React.PureComponent<{
       <React.Fragment>
         {filteredItems.map((item, index) => {
           let iconButtonElement = (
-            <IconButton touch={true}>
+            <IconButton>
               <MoreVertIcon />
             </IconButton>
           );
@@ -210,12 +195,14 @@ class CollectionListItems extends React.PureComponent<{
             <Fragment key={item.key}>
               {index !== 0 ? <Divider /> : undefined}
               <ListItem
-                primaryText={item.label || item.key}
+                button
                 onClick={() => {
                   onItemClick(item);
                 }}
-                rightIconButton={rightIconMenu}
-              />
+              >
+                <ListItemText id={item.key} primary={`${item.label || item.key}`} />
+                <ListItemSecondaryAction>{rightIconMenu}</ListItemSecondaryAction>
+              </ListItem>
             </Fragment>
           );
         })}
@@ -439,7 +426,6 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
       } else if (view.key === "deleteItem") {
         dialog = (
           <DeleteItemKeyDialog
-            busy={this.state.modalBusy}
             handleClose={this.setRootView.bind(this)}
             handleConfirm={this.deleteCollectionItem.bind(this)}
             itemLabel={view.item.label}
@@ -466,16 +452,9 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
             <div style={{ padding: "20px" }}>
               <h2>{collection.title}</h2>
               <div>
-                <RaisedButton
-                  label="New Item"
-                  onClick={
-                    this.setCreateItemView.bind(
-                      this
-                    ) /* function(){ history.push('/collections/'+encodeURIComponent(collectionKey)+'/new') */
-                  }
-                />
-                {/* <span> </span>
-                    <RaisedButton label='New Section' onClick={ this.setCreateSectionView.bind(this) } /> */}
+                <Button variant={"contained"} onClick={this.setCreateItemView.bind(this)}>
+                  New Item
+                </Button>
               </div>
               <br />
               <TextField
@@ -503,16 +482,14 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
                     onRenameItemClick={this.handleRenameItemClick}
                     onDeleteItemClick={this.handleDeleteItemClick}
                   />
-                  {trunked ? (
+                  {trunked && (
                     <React.Fragment>
                       <Divider />
-                      <ListItem
-                        disabled
+                      <ListItem disabled style={{ color: "rgba(0,0,0,.3)" }}>
                         primaryText={`Max records limit reached (${MAX_RECORDS})`}
-                        style={{ color: "rgba(0,0,0,.3)" }}
-                      />
+                      </ListItem>
                     </React.Fragment>
-                  ) : null}
+                  )}
                 </List>
               </Paper>
 
