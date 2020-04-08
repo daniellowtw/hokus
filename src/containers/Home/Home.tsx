@@ -1,7 +1,7 @@
 import { Route } from "react-router-dom";
 import React, { CSSProperties } from "react";
 import service from "./../../services/service";
-import { snackMessageService } from "./../../services/ui-service";
+import { snackMessageService } from "../../services/ui-service";
 import FlatButton from "material-ui/FlatButton";
 import { List, ListItem } from "material-ui/List";
 import Subheader from "material-ui/Subheader";
@@ -19,7 +19,6 @@ import muiThemeable from "material-ui/styles/muiThemeable";
 import { MuiTheme } from "material-ui/styles";
 
 import { EmptyConfigurations, Configurations, SiteConfig, WorkspaceHeader, WorkspaceConfig } from "./../../types";
-import MuiThemed from "../../components/MuiThemed";
 
 const styles: { [k: string]: CSSProperties } = {
   container: {
@@ -55,7 +54,7 @@ interface HomeProps {
   siteKey: string;
   workspaceKey: string;
   muiTheme?: MuiTheme;
-};
+}
 
 interface HomeState {
   configurations?: Configurations | EmptyConfigurations;
@@ -84,10 +83,10 @@ class Home extends React.Component<HomeProps, HomeState> {
     console.log("HOME MOUNTED");
     service.registerListener(this);
 
-    var { siteKey, workspaceKey } = this.props;
+    const { siteKey, workspaceKey } = this.props;
     if (siteKey && workspaceKey) {
       service.getSiteAndWorkspaceData(siteKey, workspaceKey).then(bundle => {
-        var stateUpdate = {} as HomeState;
+        const stateUpdate = {} as HomeState;
         stateUpdate.configurations = bundle.configurations;
         stateUpdate.selectedSite = bundle.site;
         stateUpdate.selectedSiteWorkspaces = bundle.siteWorkspaces;
@@ -98,7 +97,7 @@ class Home extends React.Component<HomeProps, HomeState> {
       });
     } else {
       service.getConfigurations().then(c => {
-        var stateUpdate = {} as HomeState;
+        const stateUpdate = {} as HomeState;
         stateUpdate.configurations = c;
         this.setState(stateUpdate);
       });
@@ -118,7 +117,7 @@ class Home extends React.Component<HomeProps, HomeState> {
   }
 
   getWorkspaceDetails = (workspace: WorkspaceHeader) => {
-    if (this.state.selectedSite == null) throw new Error("Invalid operation.");
+    if (!this.state.selectedSite) throw new Error("Invalid operation.");
     return service.getWorkspaceDetails(this.state.selectedSite.key, workspace.key);
   };
 
@@ -135,18 +134,18 @@ class Home extends React.Component<HomeProps, HomeState> {
         <InfoLine label="Publish Options">
           {site.publish && site.publish.length > 0 ? site.publish.map(x => x.key).join(", ") : "EMPTY"}
         </InfoLine>
-        {configurations.global.siteManagementEnabled ? (
+        {configurations.global.siteManagementEnabled && (
           <InfoLine label="Config Location">
             <TextField id="config-location" value={site.configPath} />
             <FlatButton
               style={{ minWidth: "40px" }}
               icon={<IconFileFolder />}
               onClick={() => {
-                service.api.openFileExplorer(site.configPath.replace(/(\\|\/)[^\/\\]+$/, ""));
+                service.api.openFileExplorer(site.configPath.replace(/([\\/])[^\/\\]+$/, ""));
               }}
             />
           </InfoLine>
-        ) : null}
+        )}
         <InfoBlock label="Workspaces">{this.renderWorkspaces(site, this.state.selectedSiteWorkspaces)}</InfoBlock>
       </Wrapper>
     );
@@ -158,14 +157,14 @@ class Home extends React.Component<HomeProps, HomeState> {
   };
 
   async selectWorkspace(siteKey: string, workspace: WorkspaceHeader) {
-    let activeWorkspaceKey = this.props.workspaceKey;
-    let activeSiteKey = this.props.siteKey;
+    const activeWorkspaceKey = this.props.workspaceKey;
+    const activeSiteKey = this.props.siteKey;
 
-    let select =
-      activeWorkspaceKey == null ||
-      activeSiteKey == null ||
-      activeWorkspaceKey != workspace.key ||
-      activeSiteKey != siteKey;
+    const select =
+      activeWorkspaceKey === null ||
+      activeSiteKey === null ||
+      activeWorkspaceKey !== workspace.key ||
+      activeSiteKey !== siteKey;
 
     if (select) {
       await service.api.mountWorkspace(siteKey, workspace.key);
@@ -176,13 +175,13 @@ class Home extends React.Component<HomeProps, HomeState> {
     console.log(window.location.toString());
   }
 
-  renderWorkspaces(site: SiteConfig, workspaces: Array<WorkspaceHeader> | null | undefined) {
+  renderWorkspaces(site: SiteConfig, workspaces?: Array<WorkspaceHeader>) {
     return (
       <Route
         render={({ history }) => {
           this.history = history; //ugly
 
-          if (workspaces == null) return <Wrapper></Wrapper>;
+          if (!workspaces) return <Wrapper />;
 
           return (
             <Workspaces
@@ -253,12 +252,12 @@ class Home extends React.Component<HomeProps, HomeState> {
   };
 
   render() {
-    let { siteKey } = this.props;
-    let { selectedSite, configurations, createSiteDialog, publishSiteDialog } = this.state;
+    const { siteKey } = this.props;
+    const { selectedSite, configurations, createSiteDialog, publishSiteDialog } = this.state;
 
-    let _configurations = (configurations as any) as Configurations;
+    const _configurations = (configurations as any) as Configurations;
 
-    if (configurations == null) {
+    if (!configurations) {
       return <Spinner />;
     }
 
@@ -268,8 +267,8 @@ class Home extends React.Component<HomeProps, HomeState> {
           <List>
             <Subheader>All Sites</Subheader>
             {(_configurations.sites || []).map((item, index) => {
-              let selected = item === selectedSite;
-              let active = selectedSite && siteKey === item.key;
+              const selected = item === selectedSite;
+              const active = selectedSite && siteKey === item.key;
               return (
                 <ListItem
                   key={index}
@@ -284,7 +283,7 @@ class Home extends React.Component<HomeProps, HomeState> {
                 />
               );
             })}
-            {configurations.type == "EmptyConfigurations" || _configurations.global.siteManagementEnabled ? (
+            {configurations.type === "EmptyConfigurations" || _configurations.global.siteManagementEnabled ? (
               <ListItem
                 key="add-site"
                 style={styles.siteInactiveStyle}
@@ -296,7 +295,7 @@ class Home extends React.Component<HomeProps, HomeState> {
           </List>
         </div>
         <div style={styles.selectedSiteCol}>
-          {selectedSite == null ? (
+          {!selectedSite ? (
             <Wrapper title="Site Management">
               <MessageBlock>Please, select a site.</MessageBlock>
             </Wrapper>
@@ -309,19 +308,19 @@ class Home extends React.Component<HomeProps, HomeState> {
           onCancelClick={() => this.setState({ createSiteDialog: false })}
           onSubmitClick={this.handleCreateSiteSubmit}
         />
-        {selectedSite != null && this.state.publishSiteDialog != null ? (
+        {selectedSite && this.state.publishSiteDialog && (
           <PublishSiteDialog
             site={selectedSite}
             workspace={this.state.publishSiteDialog.workspace}
             workspaceHeader={this.state.publishSiteDialog.workspaceHeader}
             onCancelClick={this.handlePublishSiteCancelClick}
             onBuildAndPublishClick={this.handleBuildAndPublishClick}
-            open={publishSiteDialog != null && publishSiteDialog.open}
+            open={publishSiteDialog ? publishSiteDialog.open : false}
           />
-        ) : null}
+        )}
 
         {/*this should be moved to a UI service*/}
-        <BlockDialog open={this.state.blockingOperation != null}>
+        <BlockDialog open={this.state.blockingOperation !== null}>
           {this.state.blockingOperation}
           <span> </span>
         </BlockDialog>
@@ -331,4 +330,3 @@ class Home extends React.Component<HomeProps, HomeState> {
 }
 
 export default muiThemeable()<typeof Home, HomeProps>(Home);
-

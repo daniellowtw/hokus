@@ -9,30 +9,31 @@ import * as fs from "fs-extra";
 import { hugoDownloader } from "./hugo/hugo-downloader";
 import { dirname } from "path";
 import { shell } from "electron";
+import { Configurations, EmptyConfigurations } from "../global-types";
 
 const siteService = new SiteService();
 
-let api: { [key: string]: (payload: any) => Promise<any> } = {};
+const api: { [key: string]: (payload: any) => Promise<any> } = {};
 
 async function getWorkspaceService(
   siteKey: string,
   workspaceKey: string
 ): Promise<{ siteService: SiteService; workspaceService: WorkspaceService }> {
-  let workspaceHead = await siteService.getWorkspaceHead(siteKey, workspaceKey);
-  if (workspaceHead == null) throw new Error("Could not find workspace.");
+  const workspaceHead = await siteService.getWorkspaceHead(siteKey, workspaceKey);
+  if (!workspaceHead) throw new Error("Could not find workspace.");
   else {
-    let workspaceService = new WorkspaceService(workspaceHead.path, workspaceHead.key, siteKey);
+    const workspaceService = new WorkspaceService(workspaceHead.path, workspaceHead.key, siteKey);
     return { siteService, workspaceService };
   }
 }
 
-api.getConfigurations = async function(options: any) {
+api.getConfigurations = async function(options: any): Promise<Configurations | EmptyConfigurations> {
   return configurationDataProvider.getPromise(options);
 };
 
 api.openFileExplorer = async function({ path }: any) {
   try {
-    let lstat = fs.lstatSync(path);
+    const lstat = fs.lstatSync(path);
     if (lstat.isDirectory()) {
       shell.openItem(path);
     } else {
@@ -80,14 +81,12 @@ api.buildWorkspace = async function({ siteKey, workspaceKey, buildKey }: any) {
 
 api.getSingle = async function({ siteKey, workspaceKey, singleKey }: any) {
   const { workspaceService } = await getWorkspaceService(siteKey, workspaceKey);
-  const single = await workspaceService.getSingle(singleKey);
-  return single;
+  return await workspaceService.getSingle(singleKey);
 };
 
 api.updateSingle = async function({ siteKey, workspaceKey, singleKey, document }: any) {
   const { workspaceService } = await getWorkspaceService(siteKey, workspaceKey);
-  const result = await workspaceService.updateSingle(singleKey, document);
-  return result;
+  return await workspaceService.updateSingle(singleKey, document);
 };
 
 api.listCollectionItems = async function({ siteKey, workspaceKey, collectionKey }: any) {
@@ -102,14 +101,12 @@ api.getCollectionItem = async function({ siteKey, workspaceKey, collectionKey, c
 
 api.createCollectionItemKey = async function({ siteKey, workspaceKey, collectionKey, collectionItemKey }: any) {
   const { workspaceService } = await getWorkspaceService(siteKey, workspaceKey);
-  const item = await workspaceService.createCollectionItemKey(collectionKey, collectionItemKey);
-  return item;
+  return await workspaceService.createCollectionItemKey(collectionKey, collectionItemKey);
 };
 
 api.updateCollectionItem = async function({ siteKey, workspaceKey, collectionKey, collectionItemKey, document }: any) {
   const { workspaceService } = await getWorkspaceService(siteKey, workspaceKey);
-  const result = await workspaceService.updateCollectionItem(collectionKey, collectionItemKey, document);
-  return result;
+  return await workspaceService.updateCollectionItem(collectionKey, collectionItemKey, document);
 };
 
 api.createCollectionItemKey = async function({ siteKey, workspaceKey, collectionKey, collectionItemKey }: any) {
