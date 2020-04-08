@@ -1,10 +1,12 @@
 import React from "react";
 import service from "./../services/service";
-import { snackMessageService } from "./../services/ui-service";
-import { HokusForm } from "./../components/HokusForm";
+import { snackMessageService } from "../services/ui-service";
+import { HokusForm } from "../components/HokusForm";
 import Spinner from "./../components/Spinner";
 
 import { WorkspaceConfig } from "./../types";
+import path from "path";
+import { instance } from "../api";
 
 type CollectionItemProps = {
   siteKey: string;
@@ -75,8 +77,7 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
 
     let { selectedWorkspaceDetails, collectionItemValues } = this.state;
     let { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
-
-    let collection = selectedWorkspaceDetails.collections.find(x => x.key === collectionKey);
+    const collection = selectedWorkspaceDetails.collections.find(x => x.key === collectionKey);
     if (collection == null) return null;
 
     let fields = collection.fields.slice(0);
@@ -90,6 +91,10 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
         fields={fields}
         values={values}
         plugins={{
+          openExternallyButton: () => {
+            const filePath = path.join(selectedWorkspaceDetails?.path, collection.folder, this.props.collectionItemKey);
+            instance.openFileExternally(filePath);
+          },
           openBundleFileDialog: ({ title, extensions, targetPath }: any, onFilesReady: any) => {
             return service.api.openFileDialogForCollectionItem(
               siteKey,
