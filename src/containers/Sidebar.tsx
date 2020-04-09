@@ -1,7 +1,6 @@
 import React from "react";
 import { List, ListItem } from "material-ui/List";
 import Subheader from "material-ui/Subheader";
-import IconActionList from "material-ui/svg-icons/action/list";
 import IconLockMenu from "material-ui/svg-icons/action/lock-outline";
 import IconMenu from "material-ui/svg-icons/navigation/menu";
 import Border from "./../components/Border";
@@ -15,17 +14,15 @@ const Fragment = React.Fragment;
 const translucentColor = "RGBA(255,255,255,.2)";
 const translucentColorSubtle = "RGBA(255,255,255,.05)";
 
-let MenuBorder = ({ children }: any) => {
-  return (
-    <Border style={{ margin: "0 16px", borderRadius: 3, padding: "1px", borderColor: translucentColor }}>
-      {children}
-    </Border>
-  );
-};
+const MenuBorder = ({ children }: any) => (
+  <Border style={{ margin: "0 16px", borderRadius: 3, padding: "1px", borderColor: translucentColor }}>
+    {children}
+  </Border>
+);
 
-let WhiteSubHeader = ({ children }: any) => {
-  return <Subheader style={{ color: "white", fontWeight: 300 }}>{children}</Subheader>;
-};
+const WhiteSubHeader = ({ children }: any) => (
+  <Subheader style={{ color: "white", fontWeight: 300 }}>{children}</Subheader>
+);
 
 export type SidebarMenu = {
   title: string;
@@ -46,42 +43,30 @@ export type SidebarProps = {
   hideItems: boolean;
 };
 
-type SidebarState = {};
-
-export class Sidebar extends React.Component<SidebarProps, SidebarState> {
-  constructor(props: SidebarProps) {
-    super(props);
-    this.state = {
-      site: null,
-      workspace: null
-    };
-  }
-
+export class Sidebar extends React.PureComponent<SidebarProps> {
   render() {
-    let { hideItems, menus, menuIsLocked, onToggleItemVisibility } = this.props;
-    let menusNodes = menus.map(menu => {
+    const { hideItems, menus, menuIsLocked, onToggleItemVisibility } = this.props;
+    const menusNodes = menus.map(menu => {
       return (
         <Fragment key={menu.key || menu.title}>
           <WhiteSubHeader>{menu.title}</WhiteSubHeader>
-          {menu.widget ? menu.widget : null}
-          {menu.items ? (
+          {menu.widget}
+          {menu.items && (
             <MenuBorder>
               <List style={{ padding: 0 }}>
                 {menu.items.map((item, index) => {
-                  let style = item.active ? { background: translucentColorSubtle } : {};
                   return (
                     <ListItem
                       key={index}
-                      innerDivStyle={style}
+                      innerDivStyle={{ background: item.active ? translucentColorSubtle : undefined }}
                       onClick={item.onClick}
                       primaryText={item.label}
-                      leftIcon={<IconActionList color={translucentColor} />}
                     />
                   );
                 })}
               </List>
             </MenuBorder>
-          ) : null}
+          )}
         </Fragment>
       );
     });
@@ -91,7 +76,6 @@ export class Sidebar extends React.Component<SidebarProps, SidebarState> {
         <React.Fragment>
           <div className={"slideFadeInRight animated"} style={{ position: "relative", opacity: 1 }}>
             <IconMenu style={{ position: "absolute", right: "21px", top: "15px" }} />
-
             <FlatButton
               style={Object.assign(
                 {},
@@ -106,11 +90,12 @@ export class Sidebar extends React.Component<SidebarProps, SidebarState> {
             />
 
             <div
-              style={Object.assign(
-                {},
-                { width: "280px", transition: "all .2s" },
-                hideItems ? { opacity: 0, pointerEvents: "none" } : { opacity: 1 }
-              )}
+              style={{
+                width: "280px",
+                transition: "all .2s",
+                opacity: hideItems ? 0 : 1,
+                pointerEvents: hideItems ? "none" : undefined
+              }}
             >
               <IconButton
                 onClick={() => this.props.onLockMenuClicked()}
@@ -119,9 +104,7 @@ export class Sidebar extends React.Component<SidebarProps, SidebarState> {
               >
                 <IconLockMenu />}
               </IconButton>
-
               {menusNodes}
-
               <br />
             </div>
           </div>
