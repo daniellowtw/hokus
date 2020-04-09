@@ -20,7 +20,7 @@ import {
 import { Debounce } from "../utils/debounce";
 import { WorkspaceConfig } from "../../global-types";
 import path from "path";
-import { instance as api } from "../api";
+import { instance, instance as api } from "../api";
 import { List, ListItem, ListItemText } from "@material-ui/core";
 import { Dialog, FlatButton, IconMenu, TextField, Chip } from "material-ui";
 
@@ -452,6 +452,9 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
               <div>
                 <Button variant={"contained"} onClick={this.setCreateItemView.bind(this)}>
                   New Item
+                </Button>
+                <Button style={{marginLeft: "12px"}} variant={"contained"} onClick={() => instance.openFileExplorer(collectionBase)}>
+                  Open folder
                 </Button>
               </div>
               <br />
