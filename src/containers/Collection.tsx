@@ -6,7 +6,6 @@ import Spinner from "./../components/Spinner";
 import MoreVertIcon from "material-ui/svg-icons/navigation/more-vert";
 import ListItemSecondaryAction from "@material-ui/core/ListItemSecondaryAction";
 import IconButton from "@material-ui/core/IconButton";
-import OpenInNewIcon from "@material-ui/icons/OpenInNew";
 
 import {
   Divider,
@@ -23,7 +22,6 @@ import { WorkspaceConfig } from "../../global-types";
 import path from "path";
 import { instance as api } from "../api";
 import { List, ListItem, ListItemText } from "@material-ui/core";
-import { useState } from "react";
 import { Dialog, FlatButton, IconMenu, TextField, Chip } from "material-ui";
 
 
@@ -101,7 +99,7 @@ class EditItemKeyDialog extends React.Component<EditItemKeyDialogProps, EditItem
   }
 
   validate() {
-    let value = this.state.value || "";
+    const value = this.state.value || "";
     return /^[a-zA-Z0-9_-]+([/][a-zA-Z0-9_-]+)*$/.test(value) && value.length > 0;
   }
 
@@ -110,8 +108,8 @@ class EditItemKeyDialog extends React.Component<EditItemKeyDialogProps, EditItem
   };
 
   render() {
-    let { busy, confirmLabel } = this.props;
-    let valid = this.validate();
+    const { busy, confirmLabel } = this.props;
+    const valid = this.validate();
 
     return (
       <Dialog
@@ -172,18 +170,18 @@ class CollectionListItems extends React.PureComponent<{
   onDeleteItemClick: (item: any) => void;
 }> {
   render() {
-    let { filteredItems, onItemClick, onRenameItemClick, onDeleteItemClick, collectionBase } = this.props;
+    const { filteredItems, onItemClick, onRenameItemClick, onDeleteItemClick, collectionBase } = this.props;
     return (
       <React.Fragment>
         {filteredItems.map((item, index) => {
-          let iconButtonElement = (
+          const iconButtonElement = (
             <IconButton>
               <MoreVertIcon />
             </IconButton>
           );
 
           const filePath = path.join(collectionBase, item.key);
-          let rightIconMenu = (
+          const rightIconMenu = (
             <IconMenu iconButtonElement={iconButtonElement}>
               <MenuItem onClick={() => api.openFileExternally(filePath)}>Open externally</MenuItem>
               <MenuItem onClick={() => onRenameItemClick(item)}>Rename</MenuItem>
@@ -276,13 +274,13 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
   }
 
   deleteCollectionItem() {
-    let { siteKey, workspaceKey, collectionKey } = this.props;
+    const { siteKey, workspaceKey, collectionKey } = this.props;
     const view = this.state.view;
-    if (view == null) return;
+    if (!view) return;
     service.api.deleteCollectionItem(siteKey, workspaceKey, collectionKey, view.item.key).then(
       () => {
-        let itemsCopy: Array<any> = (this.state.items || []).slice(0);
-        let itemIndex = itemsCopy.findIndex(x => x.key === view.item.key);
+        const itemsCopy: Array<any> = (this.state.items || []).slice(0);
+        const itemIndex = itemsCopy.findIndex(x => x.key === view.item.key);
         itemsCopy.splice(itemIndex, 1);
         this.setState({ items: itemsCopy, modalBusy: false, view: undefined, ...this.resolveFilteredItems(itemsCopy) });
       },
@@ -293,13 +291,13 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
   }
 
   renameCollectionItem(itemKey: string, itemOldKey: string) {
-    let { siteKey, workspaceKey, collectionKey } = this.props;
-    if (this.state.view == null) return;
+    const { siteKey, workspaceKey, collectionKey } = this.props;
+    if (!this.state.view) return;
     service.api.renameCollectionItem(siteKey, workspaceKey, collectionKey, itemOldKey, itemKey).then(
       result => {
         if (result.renamed) {
-          let itemsCopy: Array<any> = (this.state.items || []).slice(0);
-          let itemIndex = itemsCopy.findIndex(x => x.label === itemOldKey);
+          const itemsCopy: Array<any> = (this.state.items || []).slice(0);
+          const itemIndex = itemsCopy.findIndex(x => x.label === itemOldKey);
           itemsCopy[itemIndex] = result.item;
           this.setState({
             items: itemsCopy,
@@ -321,7 +319,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
 
   createCollectionItemKey(itemKey: string) {
     this.setState({ modalBusy: true });
-    let { siteKey, workspaceKey, collectionKey } = this.props;
+    const { siteKey, workspaceKey, collectionKey } = this.props;
     service.api
       .createCollectionItemKey(siteKey, workspaceKey, collectionKey, itemKey)
       .then(
@@ -345,9 +343,9 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
 
   resolveFilteredItems = (items: Array<any>) => {
     let trunked = false;
-    let dirs: { [key: string]: boolean } = { "": true };
+    const dirs: { [key: string]: boolean } = { "": true };
     let filteredItems: Array<any> = (items || []).filter(item => {
-      let parts = item.label.split("/");
+      const parts = item.label.split("/");
       let c = "";
       for (let i = 0; i < parts.length - 1; i++) {
         c = c + parts[i] + "/";
@@ -360,7 +358,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
       filteredItems = filteredItems.slice(0, MAX_RECORDS);
       trunked = true;
     }
-    let dirsArr: Array<string> = Object.keys(dirs);
+    const dirsArr: Array<string> = Object.keys(dirs);
     return { filteredItems, trunked, dirs: dirsArr };
   };
 
@@ -372,8 +370,8 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
   };
 
   handleItemClick = (item: any) => {
-    let { siteKey, workspaceKey, collectionKey } = this.props;
-    let path = `/sites/${encodeURIComponent(siteKey)}/workspaces/${encodeURIComponent(
+    const { siteKey, workspaceKey, collectionKey } = this.props;
+    const path = `/sites/${encodeURIComponent(siteKey)}/workspaces/${encodeURIComponent(
       workspaceKey
     )}/collections/${encodeURIComponent(collectionKey)}/${encodeURIComponent(item.key)}`;
     this.history.push(path);
@@ -396,11 +394,11 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
 
   render() {
     const { collectionKey } = this.props;
-    let { filteredItems, trunked } = this.state;
+    const { filteredItems, trunked } = this.state;
     let dialog: any = undefined;
 
     if (this.state.view) {
-      let view = this.state.view;
+      const view = this.state.view;
       if (view.key === "createItem") {
         dialog = (
           <EditItemKeyDialog
@@ -435,12 +433,12 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
     }
 
     const selectedWorkspaceDetails = this.state.selectedWorkspaceDetails;
-    if (selectedWorkspaceDetails == null) {
+    if (!selectedWorkspaceDetails) {
       return <Spinner />;
     }
 
-    const collection = selectedWorkspaceDetails.collections.find(x => x.key == collectionKey);
-    if (collection == null) return null;
+    const collection = selectedWorkspaceDetails.collections.find(x => x.key === collectionKey);
+    if (!collection) return null;
 
     const collectionBase = path.join(selectedWorkspaceDetails.path, collection.folder);
 
