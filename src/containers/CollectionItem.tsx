@@ -32,8 +32,8 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
   }
 
   componentDidMount() {
-    var stateUpdate: Partial<CollectionItemState> = {};
-    var { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
+    const stateUpdate: Partial<CollectionItemState> = {};
+    const { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
 
     Promise.all([
       service.api.getWorkspaceDetails(siteKey, workspaceKey).then(workspaceDetails => {
@@ -50,9 +50,9 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
   }
 
   handleSave(context: any) {
-    let { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
+    const { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
 
-    let promise = service.api.updateCollectionItem(
+    const promise = service.api.updateCollectionItem(
       siteKey,
       workspaceKey,
       collectionKey,
@@ -71,19 +71,20 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
   }
 
   render() {
-    if (this.state.collectionItemValues === undefined || this.state.selectedWorkspaceDetails == null) {
+    if (this.state.collectionItemValues === undefined || !this.state.selectedWorkspaceDetails) {
       return <Spinner />;
     }
 
-    let { selectedWorkspaceDetails, collectionItemValues } = this.state;
-    let { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
+    const { selectedWorkspaceDetails, collectionItemValues } = this.state;
+    const { siteKey, workspaceKey, collectionKey, collectionItemKey } = this.props;
     const collection = selectedWorkspaceDetails.collections.find(x => x.key === collectionKey);
-    if (collection == null) return null;
+    if (!collection) return null;
 
-    let fields = collection.fields.slice(0);
+    const fields = collection.fields.slice(0);
+
+    // Create a new field, and set the value in the state to be the collectionItemKey
     fields.unshift({ key: "__item", type: "readonly", title: "Item" });
-
-    let values = Object.assign({ __item: collectionItemKey }, this.state.collectionItemValues);
+    const values = Object.assign({ __item: collectionItemKey }, collectionItemValues);
 
     return (
       <HokusForm
