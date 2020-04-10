@@ -143,7 +143,7 @@ export function Workspaces(props: WorkspacesProps) {
   } = props;
 
   return (
-    <Accordion style={{ margin: "0 8px" }}>
+    <Accordion style={{ margin: "0 8px" }} index={0}>
       {workspaces.map((workspace, i) => {
         const active = activeSiteKey === site.key && workspace.key === activeWorkspaceKey;
         return (
