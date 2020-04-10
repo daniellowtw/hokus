@@ -80,17 +80,11 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
     const collection = selectedWorkspaceDetails.collections.find(x => x.key === collectionKey);
     if (!collection) return null;
 
-    const fields = collection.fields.slice(0);
-
-    // Create a new field, and set the value in the state to be the collectionItemKey
-    fields.unshift({ key: "__item", type: "readonly", title: "Item" });
-    const values = Object.assign({ __item: collectionItemKey }, collectionItemValues);
-
     return (
       <HokusForm
         rootName={collection.itemtitle || collection.title}
-        fields={fields}
-        values={values}
+        fields={collection.fields}
+        values={collectionItemValues}
         plugins={{
           openExternallyButton: () => {
             const filePath = path.join(selectedWorkspaceDetails?.path, collection.folder, this.props.collectionItemKey);
