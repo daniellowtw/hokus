@@ -1,16 +1,17 @@
 import * as fs from "fs-extra";
-import path = require("path");
-import glob = require("glob");
 import { promisify } from "util";
 import { WorkspaceConfig } from "./../../../global-types.js";
 import { WorkspaceConfigProvider } from "./workspace-config-provider.js";
 import * as contentFormats from "./../../content-formats";
 import formatProviderResolver from "../../format-provider-resolver.js";
-const workspaceConfigProvider = new WorkspaceConfigProvider();
-import { globJob, createThumbnailJob } from "./../../jobs";
+import { createThumbnailJob, globJob } from "./../../jobs";
 import HugoBuilder from "../../hugo/hugo-builder.js";
 import pathHelper from "../../path-helper.js";
 import HugoServer from "../../hugo/hugo-server.js";
+import path = require("path");
+import glob = require("glob");
+
+const workspaceConfigProvider = new WorkspaceConfigProvider();
 
 class WorkspaceService {
   workspacePath: string;
@@ -175,11 +176,14 @@ class WorkspaceService {
     if (collection.folder.startsWith("content") || supportedContentExt.indexOf(collection.extension) !== -1) {
       let globExpression = path.join(folder, `**/index.{${supportedContentExt.join(",")}}`);
       let files = await globJob(globExpression, {});
-      return files.map((item: any) => {
-        let key = item.replace(folder, "").replace(/^\//, "");
-        let label = key.replace(/^\/?(.+)\/[^\/]+$/, "$1");
-        return { key, label };
-      });
+      return await Promise.all(files.map((item: any) => {
+        return fs.stat(item).then(s => {
+          const key = item.replace(folder, "").replace(/^\//, "");
+          const label = key.replace(/^\/?(.+)\/[^\/]+$/, "$1");
+          // TODO: make modified time be parsed from content's front matter.
+          return { key, label, modified: s.mtime }
+        });
+      }));
     } else {
       //data folder and everything else
       let globExpression = path.join(folder, `**/*.{${formatProviderResolver.allFormatsExt().join(",")}}`);

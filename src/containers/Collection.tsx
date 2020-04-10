@@ -23,9 +23,7 @@ import path from "path";
 import { instance, instance as api } from "../api";
 import { List, ListItem, ListItemText } from "@material-ui/core";
 import { Dialog, FlatButton, IconMenu, TextField, Chip } from "material-ui";
-
-
-const Fragment = React.Fragment;
+import Box from "@material-ui/core/Box";
 
 const MAX_RECORDS = 200;
 
@@ -151,35 +149,50 @@ type CollectionProps = {
   collectionKey: string;
 };
 
+interface Item {
+  key: string;
+  label: string;
+  modified: Date;
+}
+
+type ViewType = { key: string; item: any };
 type CollectionState = {
   selectedWorkspaceDetails: WorkspaceConfig | null;
   filter: string;
-  items?: Array<{ key: string; label: string }>;
-  filteredItems: Array<{ key: string; label: string }>;
+  items?: Array<Item>;
+  filteredItems: Array<Item>;
   trunked: boolean;
-  view?: { key?: string; item: any };
+  view?: ViewType;
   modalBusy: boolean;
   dirs: Array<string>;
 };
 
-class CollectionListItems extends React.PureComponent<{
+interface CollectionItemListProp {
   collectionBase: string;
-  filteredItems: Array<any>;
+  trunked: boolean;
+  filteredItems: Array<Item>;
   onItemClick: (item: any) => void;
   onRenameItemClick: (item: any) => void;
   onDeleteItemClick: (item: any) => void;
-}> {
-  render() {
-    const { filteredItems, onItemClick, onRenameItemClick, onDeleteItemClick, collectionBase } = this.props;
-    return (
-      <React.Fragment>
-        {filteredItems.map((item, index) => {
-          const iconButtonElement = (
-            <IconButton>
-              <MoreVertIcon />
-            </IconButton>
-          );
+}
 
+const CollectionListItems: React.FC<CollectionItemListProp> = props => {
+  const { filteredItems, onItemClick, onRenameItemClick, onDeleteItemClick, collectionBase, trunked } = props;
+
+  const iconButtonElement = (
+    <IconButton>
+      <MoreVertIcon />
+    </IconButton>
+  );
+
+  // Sort it so the most recent one is first.
+  filteredItems.sort((a, b) => {
+    return a.modified > b.modified ? -1 : 1;
+  });
+  return (
+    <Paper>
+      <List>
+        {filteredItems.map(item => {
           const filePath = path.join(collectionBase, item.key);
           const rightIconMenu = (
             <IconMenu iconButtonElement={iconButtonElement}>
@@ -188,26 +201,32 @@ class CollectionListItems extends React.PureComponent<{
               <MenuItem onClick={() => onDeleteItemClick(item)}>Delete</MenuItem>
             </IconMenu>
           );
-
           return (
-            <Fragment key={item.key}>
-              {index !== 0 ? <Divider /> : undefined}
-              <ListItem
-                button
-                onClick={() => {
-                  onItemClick(item);
-                }}
-              >
-                <ListItemText id={item.key} primary={`${item.label || item.key}`} />
-                <ListItemSecondaryAction>{rightIconMenu}</ListItemSecondaryAction>
-              </ListItem>
-            </Fragment>
+            <ListItem
+              key={item.key}
+              divider
+              button
+              onClick={() => {
+                onItemClick(item);
+              }}
+            >
+              <ListItemText id={item.key} primary={`${item.label || item.key}`} secondary={item.modified.toString()} />
+              <ListItemSecondaryAction>{rightIconMenu}</ListItemSecondaryAction>
+            </ListItem>
           );
         })}
-      </React.Fragment>
-    );
-  }
-}
+        {trunked && (
+          <React.Fragment>
+            <Divider />
+            <ListItem disabled style={{ color: "rgba(0,0,0,.3)" }}>
+              primaryText={`Max records limit reached (${MAX_RECORDS})`}
+            </ListItem>
+          </React.Fragment>
+        )}
+      </List>
+    </Paper>
+  );
+};
 
 class Collection extends React.Component<CollectionProps, CollectionState> {
   filterDebounce = new Debounce(200);
@@ -265,7 +284,7 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
         .then(() => {
           this.setState(stateUpdate);
         })
-        .catch(_ => {});
+        .catch(console.error);
     }
   }
 
@@ -392,45 +411,46 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
     });
   };
 
-  render() {
-    const { collectionKey } = this.props;
-    const { filteredItems, trunked } = this.state;
-    let dialog: any = undefined;
-
-    if (this.state.view) {
-      const view = this.state.view;
-      if (view.key === "createItem") {
-        dialog = (
+  viewDialogMap = (view: ViewType, modalBusy: boolean) => {
+    switch (view.key) {
+      case "createItem":
+        return (
           <EditItemKeyDialog
             value=""
             title="New Item"
-            busy={this.state.modalBusy}
+            busy={modalBusy}
             handleClose={this.setRootView.bind(this)}
             handleConfirm={this.createCollectionItemKey.bind(this)}
             confirmLabel="Create"
           />
         );
-      } else if (view.key === "renameItem") {
-        dialog = (
+      case "renameItem":
+        return (
           <EditItemKeyDialog
             title="Rename Item"
-            value={this.state.view.item.label}
-            busy={this.state.modalBusy}
+            value={view.item.label}
+            busy={modalBusy}
             handleClose={this.setRootView.bind(this)}
             handleConfirm={this.renameCollectionItem.bind(this)}
             confirmLabel="Rename"
           />
         );
-      } else if (view.key === "deleteItem") {
-        dialog = (
+      case "deleteItem":
+        return (
           <DeleteItemKeyDialog
             handleClose={this.setRootView.bind(this)}
             handleConfirm={this.deleteCollectionItem.bind(this)}
             itemLabel={view.item.label}
           />
         );
-      }
+      default:
+        break;
     }
+  };
+
+  render() {
+    const { collectionKey } = this.props;
+    const { filteredItems, trunked, view } = this.state;
 
     const selectedWorkspaceDetails = this.state.selectedWorkspaceDetails;
     if (!selectedWorkspaceDetails) {
@@ -449,15 +469,18 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
           return (
             <div style={{ padding: "20px" }}>
               <h2>{collection.title}</h2>
-              <div>
+              <Box>
                 <Button variant={"contained"} onClick={this.setCreateItemView.bind(this)}>
                   New Item
                 </Button>
-                <Button style={{marginLeft: "12px"}} variant={"contained"} onClick={() => instance.openFileExplorer(collectionBase)}>
+                <Button
+                  style={{ marginLeft: "12px" }}
+                  variant={"contained"}
+                  onClick={() => instance.openFileExplorer(collectionBase)}
+                >
                   Open folder
                 </Button>
-              </div>
-              <br />
+              </Box>
               <TextField
                 floatingLabelText="Filter"
                 onChange={this.handleFilterChange}
@@ -474,27 +497,15 @@ class Collection extends React.Component<CollectionProps, CollectionState> {
                   );
                 })}
               </div>
-              <Paper>
-                <List>
-                  <CollectionListItems
-                    collectionBase={collectionBase}
-                    filteredItems={filteredItems}
-                    onItemClick={this.handleItemClick}
-                    onRenameItemClick={this.handleRenameItemClick}
-                    onDeleteItemClick={this.handleDeleteItemClick}
-                  />
-                  {trunked && (
-                    <React.Fragment>
-                      <Divider />
-                      <ListItem disabled style={{ color: "rgba(0,0,0,.3)" }}>
-                        primaryText={`Max records limit reached (${MAX_RECORDS})`}
-                      </ListItem>
-                    </React.Fragment>
-                  )}
-                </List>
-              </Paper>
-
-              {dialog}
+              <CollectionListItems
+                trunked={trunked}
+                collectionBase={collectionBase}
+                filteredItems={filteredItems}
+                onItemClick={this.handleItemClick}
+                onRenameItemClick={this.handleRenameItemClick}
+                onDeleteItemClick={this.handleDeleteItemClick}
+              />
+              {view && this.viewDialogMap(view, this.state.modalBusy)}
             </div>
           );
         }}
