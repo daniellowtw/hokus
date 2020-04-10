@@ -86,7 +86,9 @@
     "_electron-dist-mac": "npm run _copy-electron-code && electron-builder",
     "dist-win": "npm run _copy-ace && rimraf dist && rimraf build && npm run _react-build && npm run _electron-dist-win",
     "dist-linux": "npm run _copy-ace && rimraf dist && rimraf build && npm run _react-build && npm run _electron-dist-linux-all",
-    "dist-mac": "npm run _copy-ace && rimraf dist && rimraf build && npm run _react-build && npm run _electron-dist-mac"
+    "dist-mac": "npm run _copy-ace && rimraf dist && rimraf build && npm run _react-build && npm run _electron-dist-mac",
+    "iterate-frontend": "yarn run _react-dev",
+    "iterate-backend": "yarn run _main-transpile && yarn run _electron-dev"
   },
   "build": {
     "appId": "julianoaklein.hokus",
