@@ -9,6 +9,8 @@ import IconNavigationCheck from "material-ui/svg-icons/navigation/check";
 import IconFileFolder from "material-ui/svg-icons/file/folder";
 import { InfoLine } from "./shared";
 import { WorkspaceConfig } from "./../../../types";
+import { instance } from "../../../api";
+import OpenInNewIcon from "@material-ui/icons/OpenInNew";
 
 type WorkspaceProps = {
   site: SiteConfig;
@@ -79,6 +81,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
     const publishDisabled =
       !config || !config.build || config.build.length === 0 || !site.publish || site.publish.length === 0;
     const startServerDisabled = !config || !config.serve || config.serve.length === 0;
+    const hokusConfigFilePath = this.state.config ? this.state.config.hokusConfigFilePath : "";
 
     return (
       <div style={{ opacity: this.state.refreshing ? 0.5 : 1 }}>
@@ -92,13 +95,16 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
             <FlatButton primary={true} label="Refresh" onClick={this.handleRefreshClick} />
           </InfoLine>
         )}
-        <InfoLine childrenWrapperStyle={{ marginTop: "8px" }} label="Actions">
-          <RaisedButton
-            label="Select"
-            disabled={!config}
-            primary={active}
-            onClick={this.handleWorkspaceSelect}
+        <InfoLine label="Hokus config file location">
+          <TextField id="open-hokus" value={hokusConfigFilePath} />
+          <FlatButton
+            style={{ minWidth: "40px" }}
+            icon={<OpenInNewIcon />}
+            onClick={() => instance.openFileExternally(hokusConfigFilePath)}
           />
+        </InfoLine>
+        <InfoLine childrenWrapperStyle={{ marginTop: "8px" }} label="Actions">
+          <RaisedButton label="Select" disabled={!config} primary={active} onClick={this.handleWorkspaceSelect} />
           &nbsp;
           <TriggerWithOptions
             triggerType={FlatButton}

@@ -17,7 +17,7 @@ export class WorkspaceConfigProvider {
   async getConfig(
     workspacePath: string,
     workspaceKey: string
-  ): Promise<WorkspaceConfig & { path: string; key: string }> {
+  ): Promise<WorkspaceConfig> {
     let filePath = this._getFilePath(workspacePath);
     const cacheKey = `${filePath}-${workspaceKey}`;
     let config: WorkspaceConfig;
@@ -36,6 +36,7 @@ export class WorkspaceConfigProvider {
       let config = this._loadConfigurationsData(filePath, workspaceKey);
       config.path = workspacePath;
       config.key = workspaceKey;
+      config.hokusConfigFilePath = filePath;
       this.cache[cacheKey] = { token, config };
       return config;
     } else {

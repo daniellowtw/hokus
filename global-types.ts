@@ -44,6 +44,7 @@ export type WorkspaceConfigRaw = {
 export type WorkspaceConfig = WorkspaceConfigRaw & {
   key: string;
   path: string;
+  hokusConfigFilePath: string;
 };
 
 export type WorkspaceHeader = {
