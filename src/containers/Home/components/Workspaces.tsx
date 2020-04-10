@@ -1,6 +1,6 @@
 import * as React from "react";
-import { Accordion, AccordionItem } from "./../../../components/Accordion";
-import { TriggerWithOptions } from "./../../../components/TriggerWithOptions";
+import { Accordion, AccordionItem } from "../../../components/Accordion";
+import { TriggerWithOptions } from "../../../components/TriggerWithOptions";
 import { WorkspaceHeader, SiteConfig } from "./../../../types";
 import FlatButton from "material-ui/FlatButton";
 import RaisedButton from "material-ui/RaisedButton";
@@ -34,8 +34,8 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
   }
 
   handleOnStartServerOptionClick = (event: any, index: number) => {
-    let cfg = this.state.config;
-    if (cfg == null) throw new Error("Invalid operation");
+    const cfg = this.state.config;
+    if (!cfg) throw new Error("Invalid operation");
     this.props.onStartServerClick(this.props.header, cfg.serve[index].key);
     return true;
   };
@@ -46,7 +46,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
     this.props.onSelectWorkspaceClick(e, this.props.site.key, this.props.header);
   };
   handlePublishClick = () => {
-    if (this.state.config != null) this.props.onPublishClick(this.props.header, this.state.config);
+    if (this.state.config) this.props.onPublishClick(this.props.header, this.state.config);
   };
   handleRefreshClick = () => {
     this.setState({ error: null, refreshing: true });
@@ -66,7 +66,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
       .catch(error => {
         this.setState({ error: error, config: undefined });
       })
-      .then(x => {
+      .then(_ => {
         setTimeout(() => {
           this.setState({ refreshing: false });
         }, 300);
@@ -74,15 +74,11 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
   };
 
   render() {
-    let { active, header, site } = this.props;
-    let { config, error } = this.state;
-    let publishDisabled =
-      config == null ||
-      config.build == null ||
-      config.build.length == 0 ||
-      site.publish == null ||
-      site.publish.length == 0;
-    let startServerDisabled = config == null || config.serve == null || config.serve.length == 0;
+    const { active, header, site } = this.props;
+    const { config, error } = this.state;
+    const publishDisabled =
+      !config || !config.build || config.build.length === 0 || !site.publish || site.publish.length === 0;
+    const startServerDisabled = !config || !config.serve || config.serve.length === 0;
 
     return (
       <div style={{ opacity: this.state.refreshing ? 0.5 : 1 }}>
@@ -90,7 +86,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
           <TextField id="location" value={header.path} />
           <FlatButton style={{ minWidth: "40px" }} icon={<IconFileFolder />} onClick={this.handleOpenLocation} />
         </InfoLine>
-        {error != null && (
+        {error && (
           <InfoLine label="Validation Error">
             <p style={{ color: "#EC407A" }}>{error}</p>
             <FlatButton primary={true} label="Refresh" onClick={this.handleRefreshClick} />
@@ -99,7 +95,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
         <InfoLine childrenWrapperStyle={{ marginTop: "8px" }} label="Actions">
           <RaisedButton
             label="Select"
-            disabled={config == null}
+            disabled={!config}
             primary={active}
             onClick={this.handleWorkspaceSelect}
           />
@@ -110,7 +106,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
               label: "Start Server",
               disabled: startServerDisabled
             }}
-            options={config != null && config.serve != null ? config.serve.map(x => x.key || "default") : []}
+            options={config && config.serve !== null ? config.serve.map(x => x.key || "default") : []}
             onOptionClick={this.handleOnStartServerOptionClick}
           />
           &nbsp;
@@ -121,7 +117,7 @@ export class Workspace extends React.Component<WorkspaceProps, WorkspaceState> {
   }
 }
 
-export function Workspaces(props: {
+type WorkspacesProps = {
   site: SiteConfig;
   activeSiteKey: string;
   workspaces: Array<WorkspaceHeader>;
@@ -131,8 +127,10 @@ export function Workspaces(props: {
   onStartServerClick: (workspace: WorkspaceHeader, config: string) => void;
   onSelectWorkspaceClick: (e: any, siteKey: string, workspace: WorkspaceHeader) => void;
   getWorkspaceDetails: (workspace: WorkspaceHeader) => Promise<WorkspaceConfig>;
-}) {
-  let {
+};
+
+export function Workspaces(props: WorkspacesProps) {
+  const {
     workspaces,
     activeWorkspaceKey,
     activeSiteKey,
@@ -146,8 +144,8 @@ export function Workspaces(props: {
 
   return (
     <Accordion style={{ margin: "0 8px" }}>
-      {(workspaces || []).map((workspace, i) => {
-        let active = activeSiteKey === site.key && workspace.key === activeWorkspaceKey;
+      {workspaces.map((workspace, i) => {
+        const active = activeSiteKey === site.key && workspace.key === activeWorkspaceKey;
         return (
           <AccordionItem
             key={i}
