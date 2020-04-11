@@ -17,7 +17,7 @@ type CollectionItemProps = {
 
 type CollectionItemState = {
   selectedWorkspaceDetails?: WorkspaceConfig;
-  collectionItemValues?: any;
+  collectionItemValues?: { [k: string]: any };
 };
 
 class CollectionItem extends React.Component<CollectionItemProps, CollectionItemState> {
@@ -84,7 +84,7 @@ class CollectionItem extends React.Component<CollectionItemProps, CollectionItem
       <HokusForm
         rootName={collection.itemtitle || collection.title}
         fields={collection.fields}
-        values={collectionItemValues}
+        values={{ ...collectionItemValues, __item: collectionItemKey }}
         plugins={{
           openExternallyButton: () => {
             const filePath = path.join(selectedWorkspaceDetails?.path, collection.folder, this.props.collectionItemKey);
