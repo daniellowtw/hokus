@@ -8,6 +8,7 @@ unhandled();
 
 // Module to control application life.
 const app = electron.app;
+app.allowRendererProcessReuse = true;
 
 // Keep a global reference of the window object, if you don't, the window will
 // be closed automatically when the JavaScript object is garbage collected.
